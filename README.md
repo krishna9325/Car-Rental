@@ -1,27 +1,42 @@
-1. Modify application.properties
-   Open src/main/resources/application.properties and update the following lines with your MySQL credentials:
+# Database Setup
 
-Properties
+This guide will walk you through the necessary steps to configure and set up the MySQL database for this application.
 
+---
+
+### 1. Configure Database Credentials 🔑
+
+First, you need to update the application's configuration file with your MySQL credentials.
+
+* Open the `src/main/resources/application.properties` file.
+* Update the following lines with your specific MySQL username and password:
+
+```properties
 spring.datasource.username=your_mysql_username
-spring.datasource.password=your_mysql_password 2. Manually Create the Database in MySQL
-Follow these steps to set up the database. The database creation is a manual step and is not handled by the application.
+spring.datasource.password=your_mysql_password
 
-Open your terminal and connect to your MySQL instance (replace your_mysql_username with your actual username):
+### 2. Manually Create the Database 🛠️
 
-Bash
+The application does not automatically create the database for you, so you must do it manually using the **MySQL command-line tool**.
 
-mysql -u your_mysql_username -p
-Enter your MySQL password when prompted.
+1.  Open your terminal or command prompt.
+2.  Connect to your MySQL instance by running the following command. Replace `your_mysql_username` with your actual username.
 
-In the MySQL shell, create the car_rental database:
+    ```bash
+    mysql -u your_mysql_username -p
+    ```
 
-SQL
+3.  Enter your **MySQL password** when prompted.
+4.  Once you're in the MySQL shell, create the `car_rental` database:
 
-CREATE DATABASE car_rental;
-Verify that the database was created successfully:
+    ```sql
+    CREATE DATABASE car_rental;
+    ```
 
-SQL
+5.  To verify that the database was created successfully, you can list all databases:
 
-SHOW DATABASES;
-You should see car_rental listed in the output.
+    ```sql
+    SHOW DATABASES;
+    ```
+
+You should see `car_rental` listed in the output.
