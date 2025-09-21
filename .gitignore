@@ -1,10 +1,10 @@
 # Node.js / React
-ui/node_modules/
-ui/build/
-ui/.env.local
-ui/.env.development.local
-ui/.env.test.local
-ui/.env.production.local
+Frontend/node_modules/
+Frontend/build/
+Frontend/.env.local
+Frontend/.env.development.local
+Frontend/.env.test.local
+Frontend/.env.production.local
 
 # Logs
 *.log
@@ -17,12 +17,12 @@ yarn-error.log*
 Thumbs.db
 
 # Spring Boot / Java
-backend/**/target/
-backend/**/.classpath
-backend/**/.project
-backend/**/.settings/
-backend/**/.idea/
-backend/**/*.iml
+Backend/**/target/
+Backend/**/.classpath
+Backend/**/.project
+Backend/**/.settings/
+Backend/**/.idea/
+Backend/**/*.iml
 
 # IDEs
 .vscode/

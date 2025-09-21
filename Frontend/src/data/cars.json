@@ -1,0 +1,123 @@
+{
+  "Tata": {
+    "punch": {
+      "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+      "pricePerDay": 1800,
+      "details": "A compact SUV designed for city and highway driving with modern safety features.",
+      "specifications": {
+        "engine": "1.2L Revotron Petrol",
+        "cc": 1199,
+        "transmission": "Manual/AMT",
+        "seatingCapacity": 5,
+        "fuelType": "Petrol"
+      },
+      "count": 5
+    },
+    "safari": {
+      "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+      "pricePerDay": 3500,
+      "details": "Premium SUV with spacious interiors and advanced infotainment system.",
+      "specifications": {
+        "engine": "2.0L Kryotec Diesel",
+        "cc": 1956,
+        "transmission": "Manual/Automatic",
+        "seatingCapacity": 7,
+        "fuelType": "Diesel"
+      },
+      "count": 3
+    },
+    "tiago": {
+      "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+      "pricePerDay": 1500,
+      "details": "Hatchback with excellent mileage and compact design for city driving.",
+      "specifications": {
+        "engine": "1.2L Revotron Petrol",
+        "cc": 1199,
+        "transmission": "Manual/AMT",
+        "seatingCapacity": 5,
+        "fuelType": "Petrol"
+      },
+      "count": 6
+    },
+    "altroz": {
+      "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+      "pricePerDay": 1600,
+      "details": "Premium hatchback with stylish design and 5-star safety rating.",
+      "specifications": {
+        "engine": "1.5L Revotorq Diesel",
+        "cc": 1497,
+        "transmission": "Manual",
+        "seatingCapacity": 5,
+        "fuelType": "Diesel"
+      },
+      "count": 4
+    }
+  },
+  "Maruti": {
+    "swift": {
+      "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+      "pricePerDay": 1400,
+      "details": "Sporty hatchback with excellent fuel efficiency and stylish looks.",
+      "specifications": {
+        "engine": "1.2L K-Series Petrol",
+        "cc": 1197,
+        "transmission": "Manual/AMT",
+        "seatingCapacity": 5,
+        "fuelType": "Petrol"
+      },
+      "count": 8
+    },
+    "alto": {
+      "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+      "pricePerDay": 1000,
+      "details": "Budget-friendly hatchback known for reliability and mileage.",
+      "specifications": {
+        "engine": "0.8L F8D Petrol",
+        "cc": 796,
+        "transmission": "Manual",
+        "seatingCapacity": 4,
+        "fuelType": "Petrol"
+      },
+      "count": 10
+    },
+    "victoris": {
+      "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+      "pricePerDay": 2000,
+      "details": "Sedan with premium comfort, large boot space, and refined engine.",
+      "specifications": {
+        "engine": "1.5L Petrol",
+        "cc": 1498,
+        "transmission": "Manual/Automatic",
+        "seatingCapacity": 5,
+        "fuelType": "Petrol"
+      },
+      "count": 2
+    },
+    "Ertiga": {
+      "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+      "pricePerDay": 2500,
+      "details": "Spacious family MPV with modern features and fuel-efficient engine.",
+      "specifications": {
+        "engine": "1.5L K15C Smart Hybrid",
+        "cc": 1462,
+        "transmission": "Manual/Automatic",
+        "seatingCapacity": 7,
+        "fuelType": "Petrol/CNG"
+      },
+      "count": 3
+    },
+    "spresso": {
+        "images": ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
+        "pricePerDay": 1200,
+        "details": "Compact SUV with bold design, high ground clearance, and city-friendly performance.",
+        "specifications": {
+            "engine": "1.0L K-Series Petrol",
+            "cc": 998,
+            "transmission": "Manual/Automatic",
+            "seatingCapacity": 4,
+            "fuelType": "Petrol"
+        },
+        "count": 3
+    }
+  }
+}
