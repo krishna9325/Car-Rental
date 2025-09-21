@@ -14,6 +14,7 @@ First, you need to update the application's configuration file with your MySQL c
 ```properties
 spring.datasource.username=your_mysql_username
 spring.datasource.password=your_mysql_password
+```
 
 ### 2. Manually Create the Database 🛠️
 
