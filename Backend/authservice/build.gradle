@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.krishnaproject'
 version = '0.0.1-SNAPSHOT'
-description = 'Car rental admin'
+description = 'auth service'
 
 java {
 	toolchain {
