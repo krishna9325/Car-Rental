@@ -1,33 +1,28 @@
 package com.krishnaproject.admin.controller;
 
+import com.krishnaproject.admin.client.CarClient;
 import com.krishnaproject.admin.dto.CityDto;
-import com.krishnaproject.admin.dto.CityNameAndIdDto;
-import com.krishnaproject.admin.entity.City;
-import com.krishnaproject.admin.service.CityService;
+import com.krishnaproject.admin.model.City;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/cities")
+@RequestMapping("/admin")
 public class CityController {
 
     @Autowired
-    private CityService cityService;
+    private CarClient carClient;
 
-    @GetMapping
-    public ResponseEntity<List<City>> getAllCities() {
-        List<City> cities = cityService.getAllCities();
-        return new ResponseEntity<>(cities, HttpStatus.OK);
+    @GetMapping("/Cities")
+    public List<City> getAllCities() {
+        return carClient.getAllCities();
     }
 
     @PostMapping
-    public ResponseEntity<City> addNewCity(@RequestBody CityDto cityDto) {
-        City city = cityService.createCity(cityDto);
-        return new ResponseEntity<>(city, HttpStatus.CREATED);
+    public City addNewCity(@RequestBody CityDto cityDto) {
+        return carClient.addNewCity(cityDto);
     }
 
 }

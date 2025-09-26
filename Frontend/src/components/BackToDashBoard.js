@@ -5,7 +5,7 @@ import { Button } from "react-bootstrap";
 const BackToDashBoard = () => {
   const navigate = useNavigate();
   const handleBack = () => {
-    navigate("/");
+    navigate("/admin");
   };
   const { colors } = useTheme();
 

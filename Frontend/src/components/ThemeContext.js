@@ -49,11 +49,12 @@ export const ThemeProvider = ({ children }) => {
       ? {
           // Dark theme colors
           primary: "#1a1a1a",
-          secondary: "#2d2d2d",
+          secondary: "#bcbcbcff",
           accent: "#404040",
           text: "#ffffff",
           swipe: "#000000",
           textSecondary: "#b0b0b0",
+          border: "#9e9e9eff",
           background:
             "linear-gradient(135deg, #1a1a1a 0%, #1a1a1a 50%, #1a1a1a 100%)",
           cardBackground: "linear-gradient(135deg, #2d2d2d, #404040)",
@@ -74,16 +75,17 @@ export const ThemeProvider = ({ children }) => {
           secondary: "#ffffff",
           accent: "#fff5f0",
           swipe: "#ffffffff",
-          text: "#2d2d2d",
-          textSecondary: "#666666",
+          text: "#000000ff",
+          textSecondary: "#6e6e6eff",
+          border: "#000000ff",
           background:
             "linear-gradient(135deg, #ffffffff 0%, #ffffffff 50%, #ffffffff 100%)",
           cardBackground: "linear-gradient(135deg, #f4f4f4ff, #f4f4f4ff)",
           carDisplayBackground: "linear-gradient(135deg, #ffffffff, #ffffffff)",
           cardHover: "0 15px 30px rgba(255, 140, 105, 0.2)",
           button: {
-            primary: "linear-gradient(135deg, #fdac94ff, #fdac94ff)",
-            secondary: "linear-gradient(135deg, #f5f5f5, #e0e0e0)",
+            primary: "linear-gradient(135deg, #f98752ff, #f98752ff)",
+            secondary: "linear-gradient(135deg, #a5a5a5ff, #a5a5a5ff)",
             danger: "linear-gradient(135deg, #ff6b6b, #ff5252)",
             success: "linear-gradient(135deg, #82c486ff, #82c486ff)",
             warning: "linear-gradient(135deg, #ffb74d, #ffa726)",
