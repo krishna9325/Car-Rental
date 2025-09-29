@@ -1,11 +1,17 @@
+import { useNavigate } from "react-router-dom";
 import { Spinner } from "react-bootstrap";
-import CarList from "./CarList";
+import CarList from "../components/CarList";
 import { useTheme } from "../contexts/ThemeContext";
 import { useCars } from "../contexts/CarsContext";
 
-function HomePage() {
+function UserHomePage() {
+  const navigate = useNavigate();
   const { loading } = useCars();
   const { colors } = useTheme();
+
+  const handleViewCar = (carId) => {
+    navigate(`/car/${carId}`);
+  };
 
   if (loading) {
     return (
@@ -27,14 +33,16 @@ function HomePage() {
             }}
           />
           <p className="mt-3 fs-5" style={{ color: colors.text }}>
-            Loading...
+            Loading cars...
           </p>
         </div>
       </div>
     );
   }
 
-  return <CarList actionType="Home" showAlert={true} />;
+  return (
+    <CarList actionType="view" onCarAction={handleViewCar} showAlert={false} />
+  );
 }
 
-export default HomePage;
+export default UserHomePage;

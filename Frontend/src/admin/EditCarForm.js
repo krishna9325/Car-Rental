@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   Form,
@@ -8,19 +8,23 @@ import {
   Col,
   Card,
   Alert,
+  Spinner,
 } from "react-bootstrap";
 import { useTheme } from "../contexts/ThemeContext";
+import { useCars } from "../contexts/CarsContext";
 import BackToDashBoard from "../components/BackToDashBoard";
 import { useAuth } from "../contexts/AuthContext";
 
-function AddCarPage() {
-  const location = useLocation();
+function EditCarForm() {
+  const { carId } = useParams();
   const navigate = useNavigate();
-  const { cities } = location.state || { cities: [] };
   const { isDark, colors } = useTheme();
   const { getAuthHeaders } = useAuth();
+  const { cities, loading: citiesLoading } = useCars();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [carLoading, setCarLoading] = useState(false);
   const [defaultCars, setDefaultCars] = useState([]);
   const [showAlert, setShowAlert] = useState({
     show: false,
@@ -29,13 +33,16 @@ function AddCarPage() {
   });
 
   const [formData, setFormData] = useState({
+    id: "",
     carName: "",
     pricePerDay: "",
     details: "",
     count: "",
     brand: "",
     cityId: "",
+    cityName: "", // added for display
     specifications: {
+      id: "",
       engine: "",
       cc: "",
       transmission: "",
@@ -45,25 +52,52 @@ function AddCarPage() {
     images: ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
   });
 
-  // ✅ Load default cars data from JSON
+  // Check if we're editing an existing car
   useEffect(() => {
-    const loadDefaultCars = async () => {
-      try {
-        const response = await fetch("/data/cars.json");
-        if (response.ok) {
-          const carsData = await response.json();
-          setDefaultCars(carsData);
-        } else {
-          console.error("Failed to load default cars data");
-        }
-      } catch (error) {
-        console.error("Error loading default cars:", error);
-      }
-    };
-    loadDefaultCars();
-  }, []);
+    if (carId && carId !== "new") {
+      setIsEditing(true);
+      fetchCarData(carId);
+    }
+  }, [carId]);
 
-  // ✅ Handle form input
+  // Fetch specific car data for editing
+  const fetchCarData = async (id) => {
+    setCarLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8080/admin/cars/${id}`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const carData = await response.json();
+        console.log("carData: ", carData);
+
+        setFormData({
+          ...carData,
+          cityId: carData.city.id,
+          cityName: carData.city.cityName,
+        });
+
+        console.log("formData: ", formData);
+      } else {
+        setShowAlert({
+          show: true,
+          message: "Failed to load car data",
+          type: "danger",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching car:", error);
+      setShowAlert({
+        show: true,
+        message: "Error loading car data",
+        type: "danger",
+      });
+    } finally {
+      setCarLoading(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name in formData.specifications) {
@@ -76,7 +110,6 @@ function AddCarPage() {
     }
   };
 
-  // ✅ Handle default car selection
   const handleDefaultCarSelect = (e) => {
     const selectedCarName = e.target.value;
     const selectedCar = defaultCars.find(
@@ -91,21 +124,24 @@ function AddCarPage() {
         pricePerDay: selectedCar.pricePerDay,
         details: selectedCar.details || "",
         specifications: selectedCar.specifications || prev.specifications,
-        // keep count & cityId empty for manual input
         count: "",
         cityId: "",
+        cityName: "",
       }));
     }
   };
 
-  // ✅ Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:8080/admin/cars", {
-        method: "POST",
+      const url = `http://localhost:8080/admin/cars/${carId}`;
+
+      const method = "PUT";
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           ...getAuthHeaders(),
@@ -116,14 +152,14 @@ function AddCarPage() {
       if (response.ok) {
         setShowAlert({
           show: true,
-          message: "Car added successfully! Redirecting...",
+          message: "Car updated successfully! Redirecting...",
           type: "success",
         });
-        setTimeout(() => navigate("/admin"), 1000);
+        setTimeout(() => navigate("/admin/list-car"), 1000);
       } else {
         setShowAlert({
           show: true,
-          message: "Failed to add car! Please try again.",
+          message: "Failed to update car! Please try again.",
           type: "danger",
         });
       }
@@ -139,7 +175,6 @@ function AddCarPage() {
     }
   };
 
-  // ✅ Input styles
   const inputStyle = {
     backgroundColor: isDark ? "#404040" : "#ffffff",
     border: `2px solid ${isDark ? "#555" : "#e0e0e0"}`,
@@ -158,6 +193,33 @@ function AddCarPage() {
     }`,
     backgroundColor: isDark ? "#4a4a4a" : "#fff5f0",
   };
+
+  if (citiesLoading || carLoading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{
+          background: colors.background,
+          minHeight: "calc(100vh - 80px)",
+          transition: "all 0.3s ease",
+        }}
+      >
+        <div className="text-center">
+          <Spinner
+            animation="border"
+            style={{
+              width: "4rem",
+              height: "4rem",
+              color: colors.text,
+            }}
+          />
+          <p className="mt-3 fs-5" style={{ color: colors.text }}>
+            {carLoading ? "Loading car data..." : "Loading..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -198,7 +260,7 @@ function AddCarPage() {
               animation: "fadeInDown 1s ease-out",
             }}
           >
-            Add New Car
+            Edit Car
           </h1>
           <p
             className="lead"
@@ -207,47 +269,13 @@ function AddCarPage() {
               animation: "fadeInUp 1s ease-out 0.2s both",
             }}
           >
-            Add a new vehicle to your fleet
+            {" "}
+            Update vehicle information
           </p>
         </div>
 
         {/* Back Button */}
-        <BackToDashBoard />
-
-        {/* Default Cars Dropdown */}
-        {defaultCars.length > 0 && (
-          <Card
-            className="border-0 shadow-sm mb-4"
-            style={{
-              background: colors.cardBackground,
-              borderRadius: "15px",
-              animation: "slideInUp 0.8s ease-out 0.2s both",
-            }}
-          >
-            <Card.Body className="p-4">
-              <h5 className="mb-3 fw-bold" style={{ color: colors.text }}>
-                📥 Import Default Car Data
-              </h5>
-              <Form.Group>
-                <Form.Select
-                  onChange={handleDefaultCarSelect}
-                  style={inputStyle}
-                >
-                  <option value="">Select a car to import data...</option>
-                  {defaultCars.map((car) => (
-                    <option key={car.carid} value={car.carName}>
-                      {car.brand} {car.carName} - ₹{car.pricePerDay}/day
-                    </option>
-                  ))}
-                </Form.Select>
-                <Form.Text style={{ color: colors.textSecondary }}>
-                  Select a car to auto-fill fields. You’ll still need to set{" "}
-                  <b>count</b> and <b>city</b>.
-                </Form.Text>
-              </Form.Group>
-            </Card.Body>
-          </Card>
-        )}
+        <BackToDashBoard path="/admin/list-car" />
 
         {/* Form Card */}
         <Card
@@ -271,10 +299,7 @@ function AddCarPage() {
               >
                 <h4
                   className="mb-4 fw-bold"
-                  style={{
-                    color: colors.text,
-                    fontSize: "1.5rem",
-                  }}
+                  style={{ color: colors.text, fontSize: "1.5rem" }}
                 >
                   📋 Basic Information
                 </h4>
@@ -394,13 +419,13 @@ function AddCarPage() {
                         className="fw-semibold mb-2"
                         style={{ color: colors.text, fontSize: "1.1rem" }}
                       >
-                        Select City
+                        City
                       </Form.Label>
-                      <Form.Select
-                        name="cityId"
-                        value={formData.cityId}
-                        onChange={handleChange}
-                        required
+                      <Form.Control
+                        type="text"
+                        name="cityName"
+                        value={formData.cityName}
+                        disabled
                         style={inputStyle}
                         onFocus={(e) =>
                           Object.assign(e.target.style, focusStyle)
@@ -408,14 +433,7 @@ function AddCarPage() {
                         onBlur={(e) =>
                           Object.assign(e.target.style, inputStyle)
                         }
-                      >
-                        <option value="">Choose City</option>
-                        {cities.map((city) => (
-                          <option key={city.id} value={city.id}>
-                            {city.cityName}
-                          </option>
-                        ))}
-                      </Form.Select>
+                      />
                     </Form.Group>
                   </Col>
                   <Col xs={12} md={6}>
@@ -447,7 +465,7 @@ function AddCarPage() {
                 </Row>
               </div>
 
-              {/* Specifications Section */}
+              {/* Technical Specifications Section */}
               <div className="mb-5">
                 <h4
                   className="mb-4 fw-bold"
@@ -551,7 +569,6 @@ function AddCarPage() {
                         onChange={handleChange}
                         placeholder="5"
                         min="1"
-                        max="12"
                         style={inputStyle}
                         onFocus={(e) =>
                           Object.assign(e.target.style, focusStyle)
@@ -578,7 +595,7 @@ function AddCarPage() {
                         name="fuelType"
                         value={formData.specifications.fuelType}
                         onChange={handleChange}
-                        placeholder="Petrol/Diesel/Electric/Hybrid"
+                        placeholder="Petrol/Diesel/CNG/Electric"
                         style={inputStyle}
                         onFocus={(e) =>
                           Object.assign(e.target.style, focusStyle)
@@ -592,37 +609,40 @@ function AddCarPage() {
                 </Row>
               </div>
 
-              {/* Submit Section */}
+              {/* Submit Button */}
               <div className="text-center">
                 <Button
                   type="submit"
                   disabled={isSubmitting}
+                  className="px-5 py-3"
                   style={{
-                    background: colors.button.success,
+                    background: colors.button.primary,
                     border: "none",
-                    borderRadius: "25px",
-                    padding: "15px 40px",
-                    fontSize: "1.2rem",
-                    fontWeight: "bold",
-                    color: "#ffffff",
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+                    borderRadius: "12px",
+                    fontSize: "1.1rem",
+                    fontWeight: "600",
+                    letterSpacing: "0.5px",
                     transition: "all 0.3s ease",
-                    minWidth: "200px",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSubmitting) {
-                      e.target.style.transform = "translateY(-3px)";
-                      e.target.style.boxShadow = "0 12px 25px rgba(0,0,0,0.4)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSubmitting) {
-                      e.target.style.transform = "translateY(0)";
-                      e.target.style.boxShadow = "0 8px 20px rgba(0,0,0,0.3)";
-                    }
+                    boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
                   }}
                 >
-                  {isSubmitting ? "🔄 Adding Car..." : "Add Car to Fleet"}
+                  {isSubmitting ? (
+                    <>
+                      <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                        className="me-2"
+                      />
+                      Saving...
+                    </>
+                  ) : isEditing ? (
+                    "Update Car"
+                  ) : (
+                    "Add Car"
+                  )}
                 </Button>
               </div>
             </Form>
@@ -633,4 +653,4 @@ function AddCarPage() {
   );
 }
 
-export default AddCarPage;
+export default EditCarForm;

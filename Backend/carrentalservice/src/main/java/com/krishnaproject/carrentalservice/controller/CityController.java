@@ -2,6 +2,7 @@ package com.krishnaproject.carrentalservice.controller;
 
 
 import com.krishnaproject.carrentalservice.dto.CityDto;
+import com.krishnaproject.carrentalservice.dto.SpecificationsDto;
 import com.krishnaproject.carrentalservice.entity.City;
 import com.krishnaproject.carrentalservice.service.CityService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +13,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping
+@RequestMapping("/cars")
 public class CityController {
 
     @Autowired
     private CityService cityService;
 
-    @GetMapping("/cars/cities")
+    @GetMapping("/public/cities")
     public ResponseEntity<List<City>> getAllCities() {
         List<City> cities = cityService.getAllCities();
         return new ResponseEntity<>(cities, HttpStatus.OK);

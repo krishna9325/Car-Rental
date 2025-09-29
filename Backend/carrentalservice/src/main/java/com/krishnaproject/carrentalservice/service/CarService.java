@@ -1,6 +1,7 @@
 package com.krishnaproject.carrentalservice.service;
 
 import com.krishnaproject.carrentalservice.dto.CarDto;
+import com.krishnaproject.carrentalservice.dto.CarWithCityDto;
 import com.krishnaproject.carrentalservice.entity.Car;
 import com.krishnaproject.carrentalservice.entity.City;
 import com.krishnaproject.carrentalservice.exception.CarNotFoundException;
@@ -13,6 +14,7 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CarService {
@@ -25,9 +27,16 @@ public class CarService {
         return carRepository.findAll();
     }
 
-    public Car getCarById(Long id) {
-        return carRepository.findById(id)
-                .orElseThrow(() -> new CarNotFoundException("Car with ID " + id + " not found."));
+    public CarWithCityDto getCarById(Long id) {
+        Optional<Car> car = carRepository.findById(id);
+        if(car.isPresent()) {
+            CarWithCityDto carWithCityDto = new CarWithCityDto();
+            CarWithCityDto.carToDto(carWithCityDto, car.get());
+            System.out.println(carWithCityDto);
+            return carWithCityDto;
+        } else {
+            throw new CarNotFoundException("Car with ID " + id + " not found.");
+        }
     }
 
     public Car createCar(CarDto carDto) {

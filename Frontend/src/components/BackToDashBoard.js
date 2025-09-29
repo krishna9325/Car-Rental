@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "./ThemeContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { Button } from "react-bootstrap";
 
-const BackToDashBoard = () => {
+const BackToDashBoard = (props) => {
   const navigate = useNavigate();
   const handleBack = () => {
-    navigate("/admin");
+    navigate(props.path ? props.path : "/admin");
   };
   const { colors } = useTheme();
 

@@ -1,6 +1,6 @@
 // auth/ProtectedRoute.js - Component to protect admin routes
-import { useAuth } from "./AuthContext";
-import { useTheme } from "../components/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
       if (!isAuthenticated) {
         // Not authenticated, redirect to appropriate login
         navigate(requireAdmin ? "/admin/login" : "/login");
-      } else if (requireAdmin && !isAdmin()) {
+      } else if (requireAdmin && !isAdmin) {
         // Authenticated but not admin, redirect to home
         navigate("/");
       }
@@ -54,7 +54,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   }
 
   // If not authenticated or (requireAdmin and not admin), don't render
-  if (!isAuthenticated || (requireAdmin && !isAdmin())) {
+  if (!isAuthenticated || (requireAdmin && !isAdmin)) {
     return null; // useEffect will handle redirection
   }
 

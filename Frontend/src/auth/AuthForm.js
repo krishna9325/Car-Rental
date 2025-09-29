@@ -1,7 +1,7 @@
 // AuthForm.js - Debug version to check role field visibility
 import { useState } from "react";
-import { useTheme } from "../components/ThemeContext";
-import { useAuth } from "./AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 
 const AuthForm = ({ isAdmin = false, defaultMode = "login" }) => {
@@ -86,7 +86,7 @@ const AuthForm = ({ isAdmin = false, defaultMode = "login" }) => {
           if (result.user.isAdmin) {
             navigate("/admin");
           } else {
-            navigate("/");
+            navigate("/home");
           }
         }, 1000);
       } else {

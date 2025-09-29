@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/admin/cities")
 public class CityController {
 
     @Autowired
     private CarClient carClient;
 
-    @GetMapping("/Cities")
+    @GetMapping
     public List<City> getAllCities() {
         return carClient.getAllCities();
     }

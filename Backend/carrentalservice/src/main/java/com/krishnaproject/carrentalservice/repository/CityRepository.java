@@ -21,4 +21,6 @@ public interface CityRepository extends JpaRepository<City, Long> {
     Optional<City> findCityWithCars(@Param("cityId") Long cityId);
 
     List<CityNameAndIdDto> findAllProjectedBy();
+
+    Optional<City> findByPinCode(Long pinCode);
 }

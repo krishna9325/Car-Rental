@@ -1,11 +1,17 @@
+import { useNavigate } from "react-router-dom";
 import { Spinner } from "react-bootstrap";
-import CarList from "./CarList";
+import CarList from "../components/CarList";
 import { useTheme } from "../contexts/ThemeContext";
 import { useCars } from "../contexts/CarsContext";
 
-function HomePage() {
+function ListAllCars() {
+  const navigate = useNavigate();
   const { loading } = useCars();
   const { colors } = useTheme();
+
+  const handleEditCar = (carId) => {
+    navigate(`/admin/edit/${carId}`);
+  };
 
   if (loading) {
     return (
@@ -27,14 +33,20 @@ function HomePage() {
             }}
           />
           <p className="mt-3 fs-5" style={{ color: colors.text }}>
-            Loading...
+            Loading cars for management...
           </p>
         </div>
       </div>
     );
   }
 
-  return <CarList actionType="Home" showAlert={true} />;
+  return (
+    <CarList
+      actionType="admin" // Shows Edit
+      onCarAction={handleEditCar}
+      showAlert={true}
+    />
+  );
 }
 
-export default HomePage;
+export default ListAllCars;

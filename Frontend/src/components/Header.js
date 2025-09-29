@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useTheme } from "./ThemeContext";
-import { useAuth } from "../auth/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
 
 const Header = () => {
   const { isDark, toggleTheme, colors } = useTheme();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const navigate = useNavigate();
   const [isNavOpen, setIsNavOpen] = useState(false);
 
@@ -44,9 +44,9 @@ const Header = () => {
     >
       <div className="container d-flex justify-content-between align-items-center">
         {/* Left - Logo */}
-        <a
+        <Link
+          to={isAdmin ? "/admin" : "/"}
           className="navbar-brand d-flex flex-column"
-          href="/"
           style={{
             textDecoration: "none",
             lineHeight: "1.1",
@@ -78,7 +78,8 @@ const Header = () => {
           >
             Premium Car Services
           </span>
-        </a>
+          {/* same inner spans */}
+        </Link>
 
         {/* Right - Theme toggle + Hamburger */}
         <div className="d-flex align-items-center ms-auto">

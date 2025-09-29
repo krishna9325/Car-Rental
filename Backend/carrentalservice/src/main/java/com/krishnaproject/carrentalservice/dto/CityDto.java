@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CityDto {
+    private Long id;
     private String cityName;
     private Long pinCode;
 }

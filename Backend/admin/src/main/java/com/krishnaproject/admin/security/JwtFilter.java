@@ -23,11 +23,6 @@ public class JwtFilter extends OncePerRequestFilter {
     @Value("${jwt.secret}")
     private String SECRET;
 
-//    private static final List<String> PUBLIC_PATHS = List.of(
-//            "/admin/login",
-//            "/admin/signup"
-//    );
-
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
@@ -67,8 +62,8 @@ public class JwtFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             decodedJWT.getSubject(),
-                            null,
-                            List.of(new SimpleGrantedAuthority("ADMIN")) // role granted
+                            token,
+                            List.of(new SimpleGrantedAuthority("ADMIN"))
                     );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);

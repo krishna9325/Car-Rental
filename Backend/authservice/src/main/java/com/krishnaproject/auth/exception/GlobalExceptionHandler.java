@@ -1,41 +1,43 @@
 package com.krishnaproject.auth.exception;
+
+import com.krishnaproject.auth.model.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistException.class)
-    public ResponseEntity<Object> handleUserAlreadyExistException(UserAlreadyExistException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("error", true);
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExist(UserAlreadyExistException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(true, ex.getMessage(), HttpStatus.CONFLICT.value()));
     }
 
     @ExceptionHandler(InvalidUserOrPasswordException.class)
-    public ResponseEntity<Object> handleInvalidUserOrPasswordException(InvalidUserOrPasswordException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("error", true);
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<ErrorResponse> handleInvalidUser(InvalidUserOrPasswordException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(true, ex.getMessage(), HttpStatus.UNAUTHORIZED.value()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(true, ex.getMessage(), HttpStatus.FORBIDDEN.value()));
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Object> handleRuntimeException(RuntimeException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("error", true);
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex) {
+        String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(true, message, HttpStatus.BAD_REQUEST.value()));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleGenericException(Exception ex) {
-        return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+        String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(true, message, HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
 }

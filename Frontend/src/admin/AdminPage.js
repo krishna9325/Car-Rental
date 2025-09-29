@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Container, Spinner, Card, Row, Col } from "react-bootstrap";
-import { useTheme } from "../components/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 function CarsPage() {
   const [cities, setCities] = useState([]);
@@ -10,7 +10,7 @@ function CarsPage() {
   const { isDark, colors } = useTheme();
 
   useEffect(() => {
-    fetch("http://localhost:8080/cities")
+    fetch("http://localhost:8080/cars/public/cities")
       .then((res) => res.json())
       .then((data) => {
         setCities(data);
@@ -32,7 +32,7 @@ function CarsPage() {
 
   const handleUpdateCar = () => {
     console.log(cities);
-    navigate("/admin/cities", { state: { cities } });
+    navigate("/admin/list-car", { state: { cities } });
   };
 
   const cardConfigs = [

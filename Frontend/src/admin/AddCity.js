@@ -9,8 +9,9 @@ import {
   Card,
   Alert,
 } from "react-bootstrap";
-import { useTheme } from "../components/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext";
 import BackToDashBoard from "../components/BackToDashBoard";
+import { useAuth } from "../contexts/AuthContext";
 
 function AddCity() {
   const location = useLocation();
@@ -18,6 +19,7 @@ function AddCity() {
   const { cities } = location.state || { cities: [] };
   const { isDark, colors } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { getAuthHeaders } = useAuth();
   const [showAlert, setShowAlert] = useState({
     show: false,
     message: "",
@@ -39,40 +41,52 @@ function AddCity() {
     setIsSubmitting(true);
 
     try {
-      console.log(formData.pinCode);
-      const cityExists = cities.some(
-        (city) => city.pinCode === Number(formData.pinCode)
-      );
-
-      if (cityExists) {
-        setShowAlert({
-          show: true,
-          message: "City already exists!",
-          type: "danger",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      const response = await fetch("http://localhost:8080/cities", {
+      // Remove frontend validation since backend handles it better
+      const response = await fetch("http://localhost:8080/cars/admin/cities", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          cityName: formData.cityName,
+          pinCode: Number(formData.pinCode), // Ensure it's a number
+        }),
       });
 
+      // Always try to parse response as JSON
+      const data = await response.json();
+
       if (response.ok) {
+        // Success response
         setShowAlert({
           show: true,
           message: "City added successfully! Redirecting...",
           type: "success",
         });
+
+        // Reset form
+        setFormData({
+          cityName: "",
+          pinCode: "",
+        });
+
         setTimeout(() => {
           navigate("/admin");
         }, 1000);
       } else {
+        // Error response - use the backend message
+        let errorMessage = "Failed to add city! Please try again.";
+
+        if (data && data.message) {
+          errorMessage = data.message;
+        } else if (data && data.error === true) {
+          errorMessage = data.error || errorMessage;
+        }
+
         setShowAlert({
           show: true,
-          message: "Failed to add city! Please try again.",
+          message: errorMessage,
           type: "danger",
         });
       }

@@ -24,18 +24,16 @@ public class JwtFilter extends OncePerRequestFilter {
     private String SECRET;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        return path.startsWith("/cars/public/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-
-        String path = request.getRequestURI();
-
-        // Skip JWT check for public endpoints
-        if (!path.startsWith("/admin")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         String header = request.getHeader("Authorization");
 

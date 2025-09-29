@@ -10,7 +10,7 @@ import {
   Spinner,
   Alert,
 } from "react-bootstrap";
-import { useTheme } from "../components/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 const CarViewPage = () => {
   const { carId } = useParams();
@@ -31,7 +31,9 @@ const CarViewPage = () => {
 
   const fetchCarDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/cars/${carId}`);
+      const response = await fetch(
+        `http://localhost:8080/cars/public/${carId}`
+      );
       if (response.ok) {
         const data = await response.json();
         setCar(data);
@@ -131,7 +133,7 @@ const CarViewPage = () => {
               The requested car could not be found.
             </p>
             <Button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
               style={{
                 background: colors.button.primary,
                 border: "none",
@@ -215,7 +217,7 @@ const CarViewPage = () => {
                       style={{
                         width: "100%",
                         height: "100%",
-                        objectFit: "cover",
+                        objectFit: "contain",
                       }}
                       onError={(e) => {
                         e.target.src =
@@ -320,7 +322,7 @@ const CarViewPage = () => {
                       style={{
                         width: "80px",
                         height: "60px",
-                        objectFit: "cover",
+                        objectFit: "contain",
                         borderRadius: "8px",
                         cursor: "pointer",
                         border:

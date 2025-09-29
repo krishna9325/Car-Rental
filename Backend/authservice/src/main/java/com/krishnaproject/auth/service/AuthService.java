@@ -1,15 +1,15 @@
 package com.krishnaproject.auth.service;
 
 import com.krishnaproject.auth.entity.User;
+import com.krishnaproject.auth.exception.AccessDeniedException;
 import com.krishnaproject.auth.exception.InvalidUserOrPasswordException;
 import com.krishnaproject.auth.exception.UserAlreadyExistException;
 import com.krishnaproject.auth.repository.UserRepository;
 import com.krishnaproject.auth.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import org.springframework.dao.DataAccessException;
 
 @Service
 public class AuthService {
@@ -21,47 +21,44 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public String signup(String username, String password, String expectedRole) {
+    public String signup(String username, String password, String role) {
         if (userRepository.existsByUsername(username)) {
-            throw new UserAlreadyExistException("Username already exists, try with a different username.");
+            throw new UserAlreadyExistException("Username already exists. Try a different one.");
         }
 
         try {
             User user = new User();
             user.setUsername(username);
             user.setPassword(passwordEncoder.encode(password));
-            user.setRole(expectedRole);
+            user.setRole(role);
             userRepository.save(user);
         } catch (DataAccessException e) {
-            // Handle database save failures, e.g., connection issues or constraints
-            throw new RuntimeException("An error occurred while creating the user account. Please try again later.", e);
+            throw new RuntimeException("Failed to create user account. Please try again later.", e);
         }
 
         try {
-            return jwtUtil.generateToken(username, expectedRole);
+            return jwtUtil.generateToken(username, role);
         } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to generate authentication token. Please contact support.", e);
+            throw new RuntimeException("Failed to generate authentication token.", e);
         }
     }
 
-    // ---------------- Login ----------------
     public String login(String username, String password, String expectedRole) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new InvalidUserOrPasswordException("Invalid username/password"));
+                .orElseThrow(() -> new InvalidUserOrPasswordException("Invalid username or password."));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new InvalidUserOrPasswordException("Invalid username/password");
+            throw new InvalidUserOrPasswordException("Invalid username or password.");
         }
-        System.out.println("Expected roke from login auth: " + expectedRole);
 
         if (!user.getRole().equalsIgnoreCase(expectedRole)) {
-            throw new RuntimeException("Access denied for this role");
+            throw new AccessDeniedException("Access denied for this role.");
         }
 
         try {
             return jwtUtil.generateToken(username, user.getRole());
         } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to generate authentication token. Please try again.", e);
+            throw new RuntimeException("Failed to generate authentication token.", e);
         }
     }
 }

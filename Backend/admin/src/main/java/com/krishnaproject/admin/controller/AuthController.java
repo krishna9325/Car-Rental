@@ -16,27 +16,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> adminLogin(@RequestBody Map<String, String> request) {
-        try {
-            Map<String, String> response = authClient.adminLogin(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(409).body(Map.of(
-                    "error", true,
-                    "message", e.getMessage()
-            ));
-        }
+        Map<String, String> response = authClient.adminLogin(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> adminSignup(@RequestBody Map<String, String> request) {
-        try {
-            Map<String, String> response = authClient.adminSignup(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(409).body(Map.of(
-                    "error", true,
-                    "message", e.getMessage()
-            ));
-        }
+        Map<String, String> response = authClient.adminSignup(request);
+        return ResponseEntity.ok(response);
     }
 }

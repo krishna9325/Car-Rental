@@ -149,9 +149,7 @@ export const AuthProvider = ({ children }) => {
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
-  const isAdmin = () => {
-    return user && user.role === "ADMIN";
-  };
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <AuthContext.Provider

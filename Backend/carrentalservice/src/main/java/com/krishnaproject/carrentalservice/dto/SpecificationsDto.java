@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SpecificationsDto {
+    private Long id;
     private String engine;
     private int cc;
     private String transmission;
