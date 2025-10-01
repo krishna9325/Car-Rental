@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8
+    container_name: mysql-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=yourpass
+      - MYSQL_DATABASE=car_rental
+      - TZ=UTC
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: redis
+    environment:
+      - TZ=UTC
+    ports:
+      - "6379:6379"
+
+  eureka-server:
+    build:
+      context: ./EurekaServer
+    container_name: eureka-server
+    environment:
+      - TZ=UTC
+    ports:
+      - "8761:8761"
+
+  api-gateway:
+    build:
+      context: ./ApiGateway
+    container_name: api-gateway
+    environment:
+      - TZ=UTC
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+
+  user-service:
+    build:
+      context: ./UserService
+    container_name: user-service
+    environment:
+      - TZ=UTC
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql-db
+      - eureka-server
+
+  car-service:
+    build:
+      context: ./CarService
+    container_name: car-service
+    environment:
+      - TZ=UTC
+    ports:
+      - "8083:8083"
+    depends_on:
+      - mysql-db
+      - redis
+      - eureka-server
+
+  admin-service:
+    build:
+      context: ./AdminService
+    container_name: admin-service
+    environment:
+      - TZ=UTC
+    ports:
+      - "8084:8084"
+    depends_on:
+      - mysql-db
+      - eureka-server
+
+  auth-service:
+    build:
+      context: ./AuthService
+    container_name: auth-service
+    environment:
+      - TZ=UTC
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mysql-db
+      - eureka-server
+
+  react-frontend:
+    build:
+      context: ./Frontend
+      args:
+        REACT_APP_API_BASE_URL: http://api-gateway:8080
+    container_name: react-frontend
+    environment:
+      - TZ=UTC
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  mysql_data:

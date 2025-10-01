@@ -16,6 +16,7 @@ export const CarsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastFetch, setLastFetch] = useState(null);
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
   // Cache duration in milliseconds (5 minutes)
   const CACHE_DURATION = 5 * 60 * 1000;
@@ -32,8 +33,8 @@ export const CarsProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-
-      const response = await fetch("http://localhost:8080/cars/public/cities");
+      console.log(`${API_BASE_URL}/cars/public/cities`);
+      const response = await fetch(`http://localhost:8080/cars/public/cities`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

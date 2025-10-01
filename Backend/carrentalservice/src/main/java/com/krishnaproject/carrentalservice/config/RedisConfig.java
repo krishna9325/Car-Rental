@@ -14,7 +14,7 @@ public class RedisConfig {
     public RedissonClient redissonClient() {
         Config config = new Config();
         config.useSingleServer()
-                .setAddress("redis://localhost:6379")
+                .setAddress("redis://redis:6379")
                 .setConnectionPoolSize(10)
                 .setConnectionMinimumIdleSize(5);
         return Redisson.create(config);

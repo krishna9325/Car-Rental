@@ -1,9 +1,13 @@
 spring:
   application:
     name: car-service
+  redis:
+    host: redis         # Docker container name of Redis
+    port: 6379
 server:
   port: 8083
+
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://eureka-server:8761/eureka
