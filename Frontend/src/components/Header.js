@@ -259,23 +259,26 @@ const Header = () => {
                   </>
                 ) : (
                   <>
-                    <button
-                      className="btn mb-2 mb-lg-0 me-lg-2"
-                      onClick={handleProfile}
-                      style={{
-                        color: colors.text,
-                        border: `1px solid ${colors.border}`,
-                        borderRadius: "6px",
-                        padding: "8px 16px",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        margin: "2px",
-                        transition: "all 0.3s ease",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      Profile
-                    </button>
+                    {" "}
+                    {!isAdmin ? (
+                      <button
+                        className="btn mb-2 mb-lg-0 me-lg-2"
+                        onClick={handleProfile}
+                        style={{
+                          color: colors.text,
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: "6px",
+                          padding: "8px 16px",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                          margin: "2px",
+                          transition: "all 0.3s ease",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Profile
+                      </button>
+                    ) : null}
                     <button
                       className="btn"
                       onClick={handleLogout}

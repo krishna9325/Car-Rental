@@ -1,12 +1,11 @@
-// App.js - Updated routing structure
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AdminPage from "./admin/AdminPage";
-import AddCarPage from "./admin/AddCar"; // You might want to rename this to AddCarForm
+import AddCarPage from "./admin/AddCar";
 import AddCity from "./admin/AddCity";
 import Header from "./components/Header";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import { CarsProvider } from "./contexts/CarsContext"; // New context
+import { CarsProvider } from "./contexts/CarsContext";
 import "./animations.css";
 import HomePage from "./components/HomePage";
 import AdminLoginPage from "./auth/AdminLoginPage";
@@ -16,10 +15,10 @@ import SignupPage from "./auth/SignupPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import CarViewPage from "./user/CarViewPage";
 import UserHomePage from "./user/UserHome";
-import ListAllCars from "./admin/ListAllCars"; // Admin car management page
-import EditCarForm from "./admin/EditCarForm"; // Renamed from EditCarPage
-import BookingSuccessPage from "./components/BookingSuccessPage";
-import PaymentPage from "./components/PaymentPage";
+import ListAllCars from "./admin/ListAllCars";
+import EditCarForm from "./admin/EditCarForm";
+import BookingSuccessPage from "./booking/BookingSuccessPage";
+import PaymentPage from "./booking/PaymentPage";
 import UserProfile from "./user/UserProfile";
 
 function App() {
@@ -27,7 +26,6 @@ function App() {
     <ThemeProvider>
       <CarsProvider>
         {" "}
-        {/* Wrap with CarsProvider */}
         <AuthProvider>
           <Router>
             <div style={{ minHeight: "100vh" }}>
