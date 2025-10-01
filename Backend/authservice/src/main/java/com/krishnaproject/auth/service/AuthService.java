@@ -1,5 +1,6 @@
 package com.krishnaproject.auth.service;
 
+import com.krishnaproject.auth.dto.AuthResponse;
 import com.krishnaproject.auth.entity.User;
 import com.krishnaproject.auth.exception.AccessDeniedException;
 import com.krishnaproject.auth.exception.InvalidUserOrPasswordException;
@@ -21,7 +22,10 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public String signup(String username, String password, String role) {
+    /**
+     * Create a new user and return JWT token + userId.
+     */
+    public AuthResponse signup(String username, String password, String role) {
         if (userRepository.existsByUsername(username)) {
             throw new UserAlreadyExistException("Username already exists. Try a different one.");
         }
@@ -31,19 +35,23 @@ public class AuthService {
             user.setUsername(username);
             user.setPassword(passwordEncoder.encode(password));
             user.setRole(role);
-            userRepository.save(user);
+
+            User savedUser = userRepository.save(user);
+
+            String token = jwtUtil.generateToken(savedUser.getUsername(), savedUser.getRole());
+            return new AuthResponse(savedUser.getId(), token);
+
         } catch (DataAccessException e) {
             throw new RuntimeException("Failed to create user account. Please try again later.", e);
-        }
-
-        try {
-            return jwtUtil.generateToken(username, role);
         } catch (RuntimeException e) {
             throw new RuntimeException("Failed to generate authentication token.", e);
         }
     }
 
-    public String login(String username, String password, String expectedRole) {
+    /**
+     * Authenticate existing user and return JWT token + userId.
+     */
+    public AuthResponse login(String username, String password, String expectedRole) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new InvalidUserOrPasswordException("Invalid username or password."));
 
@@ -56,7 +64,8 @@ public class AuthService {
         }
 
         try {
-            return jwtUtil.generateToken(username, user.getRole());
+            String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+            return new AuthResponse(user.getId(), token);
         } catch (RuntimeException e) {
             throw new RuntimeException("Failed to generate authentication token.", e);
         }

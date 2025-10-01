@@ -1,12 +1,12 @@
 // contexts/CarsContext.js
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CarsContext = createContext();
 
 export const useCars = () => {
   const context = useContext(CarsContext);
   if (!context) {
-    throw new Error('useCars must be used within a CarsProvider');
+    throw new Error("useCars must be used within a CarsProvider");
   }
   return context;
 };
@@ -23,26 +23,26 @@ export const CarsProvider = ({ children }) => {
   const fetchCities = async (forceRefresh = false) => {
     // Check if we need to fetch (no data, force refresh, or cache expired)
     const now = Date.now();
-    const cacheExpired = !lastFetch || (now - lastFetch) > CACHE_DURATION;
-    
-    if (!forceRefresh && cities.length > 0 && !cacheExpired) {
-      return cities;
-    }
+    // const cacheExpired = !lastFetch || (now - lastFetch) > CACHE_DURATION;
+
+    // if (!forceRefresh && cities.length > 0 && !cacheExpired) {
+    //   return cities;
+    // }
 
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch("http://localhost:8080/cars/public/cities");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setCities(data);
       setLastFetch(now);
       setLoading(false);
-      
+
       return data;
     } catch (err) {
       console.error("Error fetching cities:", err);
@@ -69,15 +69,13 @@ export const CarsProvider = ({ children }) => {
     if (cityId === "all") {
       return getAllCars();
     }
-    
-    const selectedCity = cities.find(
-      (city) => city.id.toString() === cityId
-    );
-    
+
+    const selectedCity = cities.find((city) => city.id.toString() === cityId);
+
     if (!selectedCity) {
       return [];
     }
-    
+
     return selectedCity.cars.map((car) => ({
       ...car,
       cityName: selectedCity.cityName,
@@ -94,9 +92,5 @@ export const CarsProvider = ({ children }) => {
     getCarsByCity,
   };
 
-  return (
-    <CarsContext.Provider value={value}>
-      {children}
-    </CarsContext.Provider>
-  );
+  return <CarsContext.Provider value={value}>{children}</CarsContext.Provider>;
 };

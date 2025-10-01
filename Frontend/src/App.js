@@ -14,10 +14,13 @@ import AdminSignupPage from "./auth/AdminSignupPage";
 import LoginPage from "./auth/LoginPage";
 import SignupPage from "./auth/SignupPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import CarViewPage from "./components/CarViewPage";
+import CarViewPage from "./user/CarViewPage";
 import UserHomePage from "./user/UserHome";
 import ListAllCars from "./admin/ListAllCars"; // Admin car management page
 import EditCarForm from "./admin/EditCarForm"; // Renamed from EditCarPage
+import BookingSuccessPage from "./components/BookingSuccessPage";
+import PaymentPage from "./components/PaymentPage";
+import UserProfile from "./user/UserProfile";
 
 function App() {
   return (
@@ -106,7 +109,7 @@ function App() {
                     path="/profile"
                     element={
                       <ProtectedRoute requireAdmin={false}>
-                        <div>User Profile Page</div>
+                        <UserProfile />
                       </ProtectedRoute>
                     }
                   />
@@ -117,6 +120,23 @@ function App() {
                     element={
                       <ProtectedRoute requireAdmin={false}>
                         <UserHomePage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/payment/:bookingId"
+                    element={
+                      <ProtectedRoute requireAdmin={false}>
+                        <PaymentPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/booking-success"
+                    element={
+                      <ProtectedRoute requireAdmin={false}>
+                        <BookingSuccessPage />
                       </ProtectedRoute>
                     }
                   />

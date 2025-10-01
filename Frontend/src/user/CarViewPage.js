@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Container,
   Row,
@@ -15,6 +15,7 @@ import { useTheme } from "../contexts/ThemeContext";
 const CarViewPage = () => {
   const { carId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDark, colors } = useTheme();
   const [car, setCar] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,11 +26,7 @@ const CarViewPage = () => {
     type: "",
   });
 
-  useEffect(() => {
-    fetchCarDetails();
-  }, [carId]);
-
-  const fetchCarDetails = async () => {
+  const fetchCarDetails = useCallback(async () => {
     try {
       const response = await fetch(
         `http://localhost:8080/cars/public/${carId}`
@@ -54,15 +51,78 @@ const CarViewPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [carId]); // Add carId as dependency
 
-  const handleRentCar = () => {
-    // For now, just show a success message
-    setShowAlert({
-      show: true,
-      message: "Rent functionality will be implemented soon!",
-      type: "info",
-    });
+  useEffect(() => {
+    fetchCarDetails();
+  }, [fetchCarDetails]);
+
+  const handleRentCar = async () => {
+    // Now location is properly imported
+    const { dateRange, cityId } = location.state || {};
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const storedToken = localStorage.getItem("token");
+    const userId = storedUser?.id;
+
+    if (!userId || !storedToken) {
+      setShowAlert({
+        show: true,
+        message: "Please login to view bookings",
+        type: "warning",
+      });
+      navigate("/login");
+      return;
+    }
+
+    if (!dateRange) {
+      setShowAlert({
+        show: true,
+        message: "Please select booking dates",
+        type: "warning",
+      });
+      navigate("/home");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch("http://localhost:8080/user/bookings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          carId: car.id,
+          userId: userId,
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+          cityId: cityId,
+        }),
+      });
+
+      if (response.ok) {
+        const booking = await response.json();
+        navigate(`/payment/${booking.bookingId}`, { state: { booking } });
+      } else {
+        const error = await response.json();
+        setShowAlert({
+          show: true,
+          message: error.message || "Booking failed",
+          type: "danger",
+        });
+      }
+    } catch (error) {
+      console.error("Booking error:", error);
+      setShowAlert({
+        show: true,
+        message: "Failed to create booking",
+        type: "danger",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const nextImage = () => {
@@ -196,7 +256,7 @@ const CarViewPage = () => {
             <Card
               className="border-0 shadow-lg"
               style={{
-                background: colors.cardBackground,
+                background: colors.carDisplayBackground,
                 borderRadius: "20px",
                 overflow: "hidden",
               }}
@@ -218,11 +278,13 @@ const CarViewPage = () => {
                         width: "100%",
                         height: "100%",
                         objectFit: "contain",
+                        background: `linear-gradient(45deg, "#ffffffff" : "#ffffffff")`,
                       }}
                       onError={(e) => {
                         e.target.src =
                           "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y4ZjlmYSIvPgogIDx0ZXh0IHg9IjIwMCIgeT0iMTUwIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2YzY5NzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlIG5vdCBmb3VuZDwvdGV4dD4KPC9zdmc+";
                       }}
+                      className="hover-img"
                     />
 
                     {/* Navigation Arrows */}

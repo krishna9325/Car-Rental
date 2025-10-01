@@ -7,10 +7,12 @@ import com.krishnaproject.carrentalservice.entity.Car;
 import com.krishnaproject.carrentalservice.service.CarService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -63,5 +65,14 @@ public class CarController {
     public ResponseEntity<String> deleteCar(@PathVariable Long id) {
         carService.deleteCar(id);
         return new ResponseEntity<>("Car removed successfully", HttpStatus.OK);
+    }
+
+    @GetMapping("/public/city/{cityId}/available-by-date")
+    public ResponseEntity<List<Car>> getAvailableCarsByDateRange(
+            @PathVariable Long cityId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        return ResponseEntity.ok(carService.getAvailableCarsByDateRange(cityId, startDate, endDate));
     }
 }

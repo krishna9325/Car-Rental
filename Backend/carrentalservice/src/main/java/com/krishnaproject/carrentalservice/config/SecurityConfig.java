@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/cars/admin/**").authenticated()
                         .requestMatchers("/cars/public/**").permitAll()
+                        .requestMatchers("/cars/bookings/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

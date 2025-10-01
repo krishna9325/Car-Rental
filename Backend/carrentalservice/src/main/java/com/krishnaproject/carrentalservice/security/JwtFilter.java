@@ -26,6 +26,7 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
+        // Skip filtering for public paths
         return path.startsWith("/cars/public/");
     }
 
@@ -51,26 +52,33 @@ public class JwtFilter extends OncePerRequestFilter {
                     .verify(token);
 
             String role = decodedJWT.getClaim("role").asString();
+            String username = decodedJWT.getSubject();
+            String path = request.getServletPath();
 
-            if (!"ADMIN".equals(role)) {
+            // Role-based access
+            if (path.startsWith("/cars/admin/") && !"ADMIN".equals(role)) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.getWriter().write("Access denied: Admins only");
+                return;
+            }
+
+            if (path.startsWith("/cars/bookings/") && !"USER".equals(role)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write("Access denied: Users only");
                 return;
             }
 
             // Build an Authentication object
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            decodedJWT.getSubject(),
+                            username,
                             null,
-                            List.of(new SimpleGrantedAuthority("ADMIN")) // role granted
+                            List.of(new SimpleGrantedAuthority(role)) // Use actual role
                     );
 
-            // Set it into the SecurityContext
+            // Set in context
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            // Optional: you can set username in request attribute for logging
-            request.setAttribute("username", decodedJWT.getSubject());
+            request.setAttribute("username", username);
 
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

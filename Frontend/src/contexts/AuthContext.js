@@ -1,4 +1,3 @@
-// AuthContext.js
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
@@ -14,11 +13,11 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // includes userId, username, role
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
 
-  // Check for existing token on app start
+  // ✅ On app start, check for saved auth data
   useEffect(() => {
     checkExistingAuth();
   }, []);
@@ -29,16 +28,14 @@ export const AuthProvider = ({ children }) => {
 
     if (storedToken && storedUser) {
       try {
-        // Decode JWT to check expiration
         const payload = JSON.parse(atob(storedToken.split(".")[1]));
         const currentTime = Date.now() / 1000;
 
         if (payload.exp > currentTime) {
           setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+          setUser(JSON.parse(storedUser)); // includes userId
           setIsAuthenticated(true);
         } else {
-          // Token expired, clear storage
           clearAuthData();
         }
       } catch (error) {
@@ -57,27 +54,24 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  // ✅ Login function
   const login = async (credentials, isAdmin = false) => {
     try {
       const endpoint = isAdmin ? "/admin/login" : "/user/login";
       const response = await fetch(`http://localhost:8080${endpoint}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
       });
 
       const data = await response.json();
+      if (data.error) throw new Error(data.message);
 
-      if (data.error) {
-        throw new Error(data.message);
-      }
-
-      if (data.token) {
-        // Decode token to get user info
+      if (data.token && data.userId) {
+        // Decode token
         const payload = JSON.parse(atob(data.token.split(".")[1]));
         const userData = {
+          id: data.userId, // ✅ backend-provided userId
           username: payload.sub,
           role: payload.role,
           isAdmin: payload.role === "ADMIN",
@@ -87,7 +81,7 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
 
-        // Store in localStorage
+        // Save to localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(userData));
 
@@ -98,27 +92,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ Signup function
   const signup = async (credentials, isAdmin = false) => {
     try {
       const endpoint = isAdmin ? "/admin/signup" : "/user/signup";
       const response = await fetch(`http://localhost:8080${endpoint}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
       });
 
       const data = await response.json();
+      if (data.error) throw new Error(data.message);
 
-      if (data.error) {
-        throw new Error(data.message);
-      }
-
-      if (data.token) {
-        // Decode token to get user info
+      if (data.token && data.userId) {
+        // Decode token
         const payload = JSON.parse(atob(data.token.split(".")[1]));
         const userData = {
+          id: data.userId, // ✅ backend-provided userId
           username: payload.sub,
           role: payload.role,
           isAdmin: payload.role === "ADMIN",
@@ -128,7 +119,7 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
 
-        // Store in localStorage
+        // Save to localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(userData));
 
@@ -155,7 +146,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         isAuthenticated,
-        user,
+        user, // now includes { id, username, role }
         token,
         loading,
         message,

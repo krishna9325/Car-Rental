@@ -13,6 +13,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,6 +83,18 @@ public class CarService {
         } else {
             throw new CarNotFoundException("Car with ID " + id + " not found.");
         }
+    }
+
+    public List<Car> getAvailableCarsByDateRange(Long cityId, LocalDate startDate, LocalDate endDate) {
+        if (!cityRepository.existsById(cityId)) {
+            throw new CityNotFoundException("City with ID " + cityId + " not found");
+        }
+
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date must be before end date");
+        }
+
+        return carRepository.findAvailableCarsByCityAndDateRange(cityId, startDate, endDate);
     }
 
     public void deleteCar(Long id) {
