@@ -2,7 +2,6 @@ package com.krishnaproject.carrentalservice.controller;
 
 import com.krishnaproject.carrentalservice.dto.CarDto;
 import com.krishnaproject.carrentalservice.dto.CarWithCityDto;
-import com.krishnaproject.carrentalservice.dto.SpecificationsDto;
 import com.krishnaproject.carrentalservice.entity.Car;
 import com.krishnaproject.carrentalservice.service.CarService;
 import jakarta.validation.Valid;

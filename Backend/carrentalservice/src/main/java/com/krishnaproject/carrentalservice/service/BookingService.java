@@ -39,27 +39,20 @@ public class BookingService {
         RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            // Try to acquire lock with 10-second wait time and 30-second lease time
-            boolean isLocked = lock.tryLock(10, 30, TimeUnit.SECONDS);
+            // Acquire lock briefly to decrement count
+            boolean isLocked = lock.tryLock(5, 10, TimeUnit.SECONDS);
 
             if (!isLocked) {
                 throw new RuntimeException("Unable to acquire lock. Please try again.");
             }
 
-            log.info("Lock acquired for car: {}", request.getCarId());
-
-            // Fetch car with pessimistic write lock - FIXED: Added pessimistic lock
-            Car car = carRepository.findById(request.getCarId())
+            Car car = carRepository.findByIdWithLock(request.getCarId())
                     .orElseThrow(() -> new CarNotFoundException("Car not found"));
 
-            log.info("car count: {}", car.getCount());
-
-            // Validate availability
             if (car.getCount() <= 0) {
                 throw new IllegalStateException("Car is out of stock");
             }
 
-            // Validate dates
             if (request.getStartDate().isBefore(LocalDate.now())) {
                 throw new IllegalArgumentException("Start date cannot be in the past");
             }
@@ -68,23 +61,14 @@ public class BookingService {
                 throw new IllegalArgumentException("End date must be after start date");
             }
 
-            // Check for conflicting bookings
-//            List<Booking> conflictingBookings = bookingRepository.findByCarIdAndStatus(
-//                    request.getCarId(), BookingStatus.CONFIRMED);
-//
-//            for (Booking existing : conflictingBookings) {
-//                if (!(request.getEndDate().isBefore(existing.getStartDate()) ||
-//                        request.getStartDate().isAfter(existing.getEndDate()))) {
-//                    throw new IllegalStateException("Car is already booked for these dates");
-//                }
-//            }
-
-            // Calculate total price
             long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate());
-            if (days == 0) days = 1; // Minimum 1 day
+            if (days == 0) days = 1;
             double totalPrice = car.getPricePerDay() * days;
 
-            // Create pending booking
+            // Decrement car count
+            car.setCount(car.getCount() - 1);
+            carRepository.save(car);
+
             Booking booking = new Booking();
             booking.setCar(car);
             booking.setUserId(request.getUserId());
@@ -93,15 +77,13 @@ public class BookingService {
             booking.setTotalPrice(totalPrice);
             booking.setStatus(BookingStatus.PENDING);
 
-            // Temporarily reduce car count
-            car.setCount(car.getCount() - 1);
-            carRepository.save(car);
-
             booking = bookingRepository.save(booking);
 
             log.info("Booking created: {}. Car count reduced to: {}", booking.getId(), car.getCount());
 
-            // Schedule async timeout checker
+            // Release lock immediately
+            lock.unlock();
+
             scheduleBookingTimeout(booking.getId());
 
             return mapToResponse(booking);
@@ -112,160 +94,86 @@ public class BookingService {
         } finally {
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
-                log.info("Lock released for car: {}", request.getCarId());
             }
         }
     }
 
     @Transactional
     public BookingResponseDto confirmPayment(PaymentRequestDto paymentRequest) {
-        String lockKey = "booking:lock:" + paymentRequest.getBookingId();
-        RLock lock = redissonClient.getLock(lockKey);
+        Booking booking = bookingRepository.findById(paymentRequest.getBookingId())
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        try {
-            boolean isLocked = lock.tryLock(5, 15, TimeUnit.SECONDS);
-
-            if (!isLocked) {
-                throw new RuntimeException("Unable to process payment. Please try again.");
-            }
-
-            Booking booking = bookingRepository.findById(paymentRequest.getBookingId())
-                    .orElseThrow(() -> new RuntimeException("Booking not found"));
-
-            // Check if booking is still valid
-            if (booking.getStatus() != BookingStatus.PENDING) {
-                throw new IllegalStateException("Booking is not in pending state");
-            }
-
-            if (LocalDateTime.now().isAfter(booking.getPaymentDeadline())) {
-                throw new IllegalStateException("Payment deadline expired");
-            }
-
-            // Simulate payment processing (fake payment)
-            boolean paymentSuccess = processFakePayment(paymentRequest);
-
-            if (paymentSuccess) {
-                booking.setStatus(BookingStatus.CONFIRMED);
-                booking = bookingRepository.save(booking);
-
-                log.info("Payment confirmed for booking: {}", booking.getId());
-
-                return mapToResponse(booking);
-            } else {
-                // Payment failed - restore car count with pessimistic lock
-                restoreCarCountWithLock(booking);
-                booking.setStatus(BookingStatus.CANCELLED);
-                bookingRepository.save(booking);
-
-                throw new RuntimeException("Payment processing failed");
-            }
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Payment process interrupted", e);
-        } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new IllegalStateException("Booking is not in pending state");
         }
+
+        if (LocalDateTime.now().isAfter(booking.getPaymentDeadline())) {
+            // Restore car count if expired
+            restoreCarCountWithLock(booking);
+            booking.setStatus(BookingStatus.EXPIRED);
+            bookingRepository.save(booking);
+            throw new IllegalStateException("Payment deadline expired");
+        }
+
+        boolean paymentSuccess = processFakePayment(paymentRequest);
+
+        if (paymentSuccess) {
+            booking.setStatus(BookingStatus.CONFIRMED);
+            bookingRepository.save(booking);
+            log.info("Payment confirmed for booking: {}", booking.getId());
+        } else {
+            // Payment failed, restore count
+            restoreCarCountWithLock(booking);
+            booking.setStatus(BookingStatus.CANCELLED);
+            bookingRepository.save(booking);
+            throw new RuntimeException("Payment failed");
+        }
+
+        return mapToResponse(booking);
     }
 
-    // Scheduled task to handle expired bookings (runs every minute)
-    @Scheduled(fixedRate = 60000) // Every 60 seconds
+    @Scheduled(fixedRate = 60000)
     @Transactional
     public void handleExpiredBookings() {
         List<Booking> expiredBookings = bookingRepository.findExpiredPendingBookings(LocalDateTime.now());
 
         for (Booking booking : expiredBookings) {
-            String lockKey = "booking:lock:" + booking.getId();
-            RLock lock = redissonClient.getLock(lockKey);
-
-            try {
-                if (lock.tryLock(2, 5, TimeUnit.SECONDS)) {
-                    // Double-check status (might have been confirmed meanwhile)
-                    booking = bookingRepository.findById(booking.getId()).orElse(null);
-
-                    if (booking != null && booking.getStatus() == BookingStatus.PENDING) {
-                        log.info("Expiring booking: {}", booking.getId());
-
-                        // Restore car count with pessimistic lock - FIXED
-                        restoreCarCountWithLock(booking);
-
-                        // Update booking status
-                        booking.setStatus(BookingStatus.EXPIRED);
-                        bookingRepository.save(booking);
-
-                        log.info("Booking expired: {}. Car count restored.", booking.getId());
-                    }
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.error("Error expiring booking: {}", booking.getId(), e);
-            } finally {
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
-            }
+            restoreCarCountWithLock(booking);
+            booking.setStatus(BookingStatus.EXPIRED);
+            bookingRepository.save(booking);
+            log.info("Expired booking handled: {}", booking.getId());
         }
     }
 
-    // Scheduled task to mark completed bookings (runs daily)
-    @Scheduled(cron = "0 0 2 * * *") // 2 AM daily
+    @Scheduled(cron = "0 0 2 * * *")
     @Transactional
     public void markCompletedBookings() {
         List<Booking> completedBookings = bookingRepository.findCompletedBookings(LocalDateTime.now());
 
         for (Booking booking : completedBookings) {
-            String lockKey = "booking:lock:" + booking.getId();
-            RLock lock = redissonClient.getLock(lockKey);
-
-            try {
-                if (lock.tryLock(2, 5, TimeUnit.SECONDS)) {
-                    // FIXED: Re-fetch with pessimistic lock to prevent race condition
-                    booking = bookingRepository.findById(booking.getId()).orElse(null);
-
-                    if (booking != null && booking.getStatus() == BookingStatus.CONFIRMED) {
-                        booking.setStatus(BookingStatus.COMPLETED);
-                        bookingRepository.save(booking);
-
-                        // Restore car count with pessimistic lock - FIXED
-                        restoreCarCountWithLock(booking);
-
-                        log.info("Booking completed and car count restored: {}", booking.getId());
-                    }
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.error("Error completing booking: {}", booking.getId(), e);
-            } finally {
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
-            }
+            booking.setStatus(BookingStatus.COMPLETED);
+            bookingRepository.save(booking);
+            restoreCarCountWithLock(booking);
+            log.info("Completed booking: {}", booking.getId());
         }
     }
 
     @Async
     protected void scheduleBookingTimeout(Long bookingId) {
-        // This runs asynchronously to check timeout
         log.info("Timeout checker scheduled for booking: {}", bookingId);
     }
 
-    // FIXED: New method to restore car count with pessimistic lock
     private void restoreCarCountWithLock(Booking booking) {
         String carLockKey = "car:lock:" + booking.getCar().getId();
         RLock carLock = redissonClient.getLock(carLockKey);
 
         try {
             if (carLock.tryLock(5, 10, TimeUnit.SECONDS)) {
-                // Fetch car with pessimistic lock
                 Car car = carRepository.findByIdWithLock(booking.getCar().getId())
                         .orElseThrow(() -> new RuntimeException("Car not found"));
-
                 car.setCount(car.getCount() + 1);
                 carRepository.save(car);
-
-                log.info("Car count restored for car: {}. New count: {}", car.getId(), car.getCount());
+                log.info("Car count restored for car: {}", car.getId());
             } else {
                 log.error("Failed to acquire lock for restoring car count: {}", booking.getCar().getId());
             }
@@ -279,24 +187,12 @@ public class BookingService {
         }
     }
 
-    // Deprecated - use restoreCarCountWithLock instead
-    @Deprecated
-    private void restoreCarCount(Booking booking) {
-        Car car = booking.getCar();
-        car.setCount(car.getCount() + 1);
-        carRepository.save(car);
-        log.info("Car count restored for car: {}. New count: {}", car.getId(), car.getCount());
-    }
-
     private boolean processFakePayment(PaymentRequestDto payment) {
-        // Simulate payment processing delay
         try {
-            Thread.sleep(1000); // 1 second delay
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-
-        // 95% success rate for simulation
         return Math.random() < 0.95;
     }
 
