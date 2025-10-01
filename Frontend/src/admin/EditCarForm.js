@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   Form,
@@ -18,115 +18,51 @@ import { useAuth } from "../contexts/AuthContext";
 function EditCarForm() {
   const { carId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const car = location.state?.car;
+
+  const [formData, setFormData] = useState(() => ({
+    ...car,
+    cityId: car?.city?.id || car?.cityId,
+    cityName: car?.city?.cityName || car?.cityName,
+  }));
+
   const { isDark, colors } = useTheme();
   const { getAuthHeaders } = useAuth();
   const { cities, loading: citiesLoading } = useCars();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [carLoading, setCarLoading] = useState(false);
-  const [defaultCars, setDefaultCars] = useState([]);
   const [showAlert, setShowAlert] = useState({
     show: false,
     message: "",
     type: "",
   });
 
-  const [formData, setFormData] = useState({
-    id: "",
-    carName: "",
-    pricePerDay: "",
-    details: "",
-    count: "",
-    brand: "",
-    cityId: "",
-    cityName: "", // added for display
-    specifications: {
-      id: "",
-      engine: "",
-      cc: "",
-      transmission: "",
-      seatingCapacity: "",
-      fuelType: "",
-    },
-    images: ["0.jpg", "1.jpg", "2.jpg", "3.jpg"],
-  });
-
-  // Check if we're editing an existing car
-  useEffect(() => {
-    if (carId && carId !== "new") {
-      setIsEditing(true);
-      fetchCarData(carId);
-    }
-  }, [carId]);
-
-  // Fetch specific car data for editing
-  const fetchCarData = async (id) => {
-    setCarLoading(true);
-    try {
-      const response = await fetch(`http://localhost:8080/admin/cars/${id}`, {
-        headers: getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        const carData = await response.json();
-        console.log("carData: ", carData);
-
-        setFormData({
-          ...carData,
-          cityId: carData.city.id,
-          cityName: carData.city.cityName,
-        });
-
-        console.log("formData: ", formData);
-      } else {
-        setShowAlert({
-          show: true,
-          message: "Failed to load car data",
-          type: "danger",
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching car:", error);
-      setShowAlert({
-        show: true,
-        message: "Error loading car data",
-        type: "danger",
-      });
-    } finally {
-      setCarLoading(false);
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name in formData.specifications) {
+
+    // Check if this field belongs to specifications
+    const specificationFields = [
+      "engine",
+      "cc",
+      "transmission",
+      "seatingCapacity",
+      "fuelType",
+    ];
+
+    if (specificationFields.includes(name)) {
       setFormData((prev) => ({
         ...prev,
-        specifications: { ...prev.specifications, [name]: value },
+        specifications: {
+          ...prev.specifications,
+          [name]: value,
+        },
       }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleDefaultCarSelect = (e) => {
-    const selectedCarName = e.target.value;
-    const selectedCar = defaultCars.find(
-      (car) => car.carName === selectedCarName
-    );
-
-    if (selectedCar) {
       setFormData((prev) => ({
         ...prev,
-        carName: selectedCar.carName,
-        brand: selectedCar.brand,
-        pricePerDay: selectedCar.pricePerDay,
-        details: selectedCar.details || "",
-        specifications: selectedCar.specifications || prev.specifications,
-        count: "",
-        cityId: "",
-        cityName: "",
+        [name]: value,
       }));
     }
   };
@@ -138,15 +74,33 @@ function EditCarForm() {
     try {
       const url = `http://localhost:8080/admin/cars/${carId}`;
 
-      const method = "PUT";
+      // Prepare the payload with cityId instead of city object
+      const payload = {
+        id: formData.id,
+        carName: formData.carName,
+        pricePerDay: parseFloat(formData.pricePerDay),
+        details: formData.details,
+        count: parseInt(formData.count),
+        brand: formData.brand,
+        cityId: formData.cityId, // Send cityId only
+        specifications: {
+          id: formData.specifications.id,
+          engine: formData.specifications.engine,
+          cc: parseInt(formData.specifications.cc),
+          transmission: formData.specifications.transmission,
+          seatingCapacity: parseInt(formData.specifications.seatingCapacity),
+          fuelType: formData.specifications.fuelType,
+        },
+        images: formData.images,
+      };
 
       const response = await fetch(url, {
-        method,
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           ...getAuthHeaders(),
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -157,9 +111,11 @@ function EditCarForm() {
         });
         setTimeout(() => navigate("/admin/list-car"), 1000);
       } else {
+        const errorData = await response.text();
+        console.error("Error response:", errorData);
         setShowAlert({
           show: true,
-          message: "Failed to update car! Please try again.",
+          message: `Failed to update car! ${errorData}`,
           type: "danger",
         });
       }
@@ -221,6 +177,23 @@ function EditCarForm() {
     );
   }
 
+  if (!car) {
+    return (
+      <Container>
+        <Alert variant="danger" className="mt-4">
+          <h5>Error</h5>
+          <p>No car data found. Please select a car from the list.</p>
+          <Button
+            variant="outline-danger"
+            onClick={() => navigate("/admin/list-car")}
+          >
+            Go Back to List
+          </Button>
+        </Alert>
+      </Container>
+    );
+  }
+
   return (
     <div
       style={{
@@ -269,7 +242,6 @@ function EditCarForm() {
               animation: "fadeInUp 1s ease-out 0.2s both",
             }}
           >
-            {" "}
             Update vehicle information
           </p>
         </div>
@@ -399,7 +371,7 @@ function EditCarForm() {
                         onChange={handleChange}
                         required
                         placeholder="6"
-                        min="1"
+                        min="0"
                         style={inputStyle}
                         onFocus={(e) =>
                           Object.assign(e.target.style, focusStyle)
@@ -427,13 +399,10 @@ function EditCarForm() {
                         value={formData.cityName}
                         disabled
                         style={inputStyle}
-                        onFocus={(e) =>
-                          Object.assign(e.target.style, focusStyle)
-                        }
-                        onBlur={(e) =>
-                          Object.assign(e.target.style, inputStyle)
-                        }
                       />
+                      <Form.Text style={{ color: colors.textSecondary }}>
+                        City cannot be changed after creation
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                   <Col xs={12} md={6}>
@@ -636,12 +605,10 @@ function EditCarForm() {
                         aria-hidden="true"
                         className="me-2"
                       />
-                      Saving...
+                      Updating...
                     </>
-                  ) : isEditing ? (
-                    "Update Car"
                   ) : (
-                    "Add Car"
+                    "Update Car"
                   )}
                 </Button>
               </div>
